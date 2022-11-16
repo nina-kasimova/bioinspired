@@ -2,6 +2,7 @@ import sys
 import numpy as np
 from capyle.utils import save, get_metadata, scale_array, gens_to_dims
 from capyle.ca import Neighbourhood
+from tile import Tile
 
 
 class CAConfig(object):
@@ -18,6 +19,7 @@ class CAConfig(object):
         self.num_generations = None
         self.nhood_arr = None
         self.initial_grid = None
+        self.tiles =  None
         # default wrapping behaviour is True
         self.wrap = True
         self.default_paths()
@@ -43,6 +45,8 @@ class CAConfig(object):
             fillstate = self.states[5] if self.states is not None else 5
             self.initial_grid = np.zeros(self.grid_dims, dtype=type(fillstate))
             self.initial_grid.fill(fillstate)
+            self.tiles=  np.zeros([len(self.initial_grid),len(self.initial_grid)], dtype=object)
+            self.tiles.fill(Tile)
             canyon_range = np.array([[0.6,0.1], [0.65, 0.8]])
             forest1_range = [(0.3, 0.1), (0.5, 0.35)]
             forest2_range = [(0, 0.4), (0.5, 0.7)]
@@ -53,23 +57,27 @@ class CAConfig(object):
                     if  canyon_range[0][0] * len(self.initial_grid) <= i and i <= canyon_range[1][0] * len(self.initial_grid):
                         if  j >= canyon_range[0][1] * len(self.initial_grid)  and j <= canyon_range[1][1] * len(self.initial_grid):
                             self.initial_grid[j, i] = self.states[4]
+                            self.tiles[j,i].state = 4
                             #print("value:", i,j)
                      
                     if  forest1_range[0][0] * len(self.initial_grid) <= i and i <= forest1_range[1][0] * len(self.initial_grid):
                         if  j >= forest1_range[0][1] * len(self.initial_grid)  and j <= forest1_range[1][1] * len(self.initial_grid):
                             self.initial_grid[j, i] = self.states[3]
+                            self.tiles[j,i].state = 3
                             #print("value:", i,j)
                     
                     if  forest2_range[0][0] * len(self.initial_grid) <= i and i <= forest2_range[1][0] * len(self.initial_grid):
                         if  j >= forest2_range[0][1] * len(self.initial_grid)  and j <= forest2_range[1][1] * len(self.initial_grid):
                             self.initial_grid[j, i] = self.states[3]
+                            self.tiles[j,i].state = 3
                             #print("value:", i,j)
                     
                     if  lake_range[0][0] * len(self.initial_grid) <= i and i <= lake_range[1][0] * len(self.initial_grid):
                         if  j >= lake_range[0][1] * len(self.initial_grid)  and j <= lake_range[1][1] * len(self.initial_grid):
                             self.initial_grid[j, i] = self.states[2]
+                            self.tiles[j,i].state = 2
                             #print("value:", i,j)
-
+            
 
         # neighbourhood array
         if self.nhood_arr is None:
