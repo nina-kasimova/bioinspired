@@ -26,6 +26,10 @@ initial_grid[70:80, 20:100] = 2  # lake
 initial_grid[20:160, 120:130] = 3  # canyon
 initial_grid[0:1, 0:1] = 4  # initial fire
 
+C = [0.1 , 0.2]
+NEIGHBOUR_DIR = [135, 180, 225, 90, 270, 45, 0, 315]
+WIND_SPEED = 1
+WIND_DIR = 135
 
 def transition_func(grid, neighbourstates, neighbourcounts):
     neighbourstates = np.array(neighbourstates)
@@ -59,28 +63,46 @@ def end_burn(i, j, cell):
         state = 5
     return state
 
+def wind_probability(neighbourstates):
+    wind_probs = np.zeros((8), dtype=int)
+    
+    #grid is 3x3 array of neighbouring cells where cell 1,1 is current cell
+    for i, state in enumerate(neighbourstates):
+        if state == 4:
+            fire_prop_dir = NEIGHBOUR_DIR[i]
+            theta = abs(WIND_DIR - fire_prop_dir)
+            ft = math.exp(WIND_SPEED * C[1] * (math.cos(theta) - 1))
+            wind_prob = ft * math.exp(C[0] * WIND_SPEED)
+            wind_probs[i] = wind_prob
+            # print(wind_prob)
+    return wind_probs
 
 def probability(cell, neighbourstates):
     fire_prob = 0
-    state = cell
+    cell_state = cell
+    wind_probs = wind_probability(neighbourstates)
 
-    for i in neighbourstates:
-        # chaparal
-        if i == 4 and cell == 0:
-            fire_prob = 0.2
-        # dense forest
-        elif i == 4 and cell == 1:
-            fire_prob = 0.05
-        elif i == 4 and cell == 2:
-            fire_prob = 0.0
-        # canyon
-        elif i == 4 and cell == 3:
-            fire_prob = 0.7
-        elif i == 4 and cell == 5:
-            fire_prob = 0.0
+    for i, state in enumerate(neighbourstates):
+        if state == 4:
+            # chaparal
+            if cell == 0:
+                fire_prob = 0.2
+            # dense forest
+            elif cell == 1:
+                fire_prob = 0.05
+            # lake
+            elif cell == 2:
+                fire_prob = 0.0
+            # canyon
+            elif cell == 3:
+                fire_prob = 0.7
+            # dead
+            elif cell == 5:
+                fire_prob = 0.0
+            fire_prob = fire_prob * (0.6 * wind_probs[i])
     if fire_prob > random.uniform(0, 1):
-        state = 4
-    return state
+        cell_state = 4
+    return cell_state
 
 
 def setup(args):
